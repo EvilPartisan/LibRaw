@@ -3,10 +3,14 @@
 fn main() {
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed=binding.rs");
+    println!("cargo::rustc-link-search=./lib");
+    println!("cargo::rustc-link-lib=libraw_static");
 
     let bindings = bindgen::Builder::default()
         .header("libraw/libraw.h")
-        .allowlist_function(r#"(\w*libraw\w*)"#)
+        .allowlist_item(r#"(\w*libraw\w*)"#)
+        .allowlist_item(r#"(\w*LIBRAW\w*)"#)
+        .allowlist_item(r#"(\w*LibRaw\w*)"#)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .expect("Unable to generate bindings");

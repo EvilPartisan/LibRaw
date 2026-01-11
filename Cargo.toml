@@ -1,7 +1,10 @@
 [package]
-name = "LibRaw"
-version = "0.1.0"
 edition = "2024"
+name = "libraw"
+version = "0.1.0"
 
 [build-dependencies]
 bindgen = "0.72.1"
+
+[dependencies]
+errno = "0.3.14"
