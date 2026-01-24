@@ -8,3 +8,4 @@ bindgen = "0.72.1"
 
 [dependencies]
 errno = "0.3.14"
+image = "0.25.9"
