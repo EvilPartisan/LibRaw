@@ -22,13 +22,7 @@ mod tests {
         let unpkg_res = lr_data.unpack();
 
         match unpkg_res {
-            Err(e) => assert!(
-                false,
-                "{}",
-                unsafe { std::ffi::CStr::from_ptr(strerror(e)) }
-                    .to_str()
-                    .unwrap()
-            ),
+            Err(e) => assert!(false, "{}", e),
             Ok(_) => (),
         }
 
@@ -56,15 +50,15 @@ mod tests {
         }
 
         //баланс белого
-        let wb = unsafe { (*lr_data.data).color.cam_mul };
+        let wb = lr_data.color.cam_mul;
         let mut max = 0.;
         for el in wb {
-            if el > max {
-                max = el;
+            if el > &max {
+                max = *el;
             };
         }
         for (x, y, px) in img_f32.enumerate_pixels_mut() {
-            let c = unsafe { libraw_COLOR(lr_data.data, y as i32, x as i32) } as usize;
+            let c = lr_data.color(y as i32, x as i32) as usize;
             px.0[0] *= wb[c] / max;
         }
 
@@ -75,7 +69,7 @@ mod tests {
         );
 
         for (x, y, pixel) in img_frgb.enumerate_pixels_mut() {
-            let c: usize = unsafe { libraw_COLOR(lr_data.data, y as i32, x as i32) } as usize;
+            let c: usize = lr_data.color(y as i32, x as i32) as usize;
             pixel.0[c] = img_f32[(x, y)].0[0];
         }
 

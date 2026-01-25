@@ -43,6 +43,7 @@ struct ImageSizes<'a> {
 #[derive(Debug)]
 struct ColorData<'a> {
     pub maximum: &'a u32,
+    pub cam_mul: &'a [f32; 4],
 }
 
 impl Libraw<'_> {
@@ -66,6 +67,7 @@ impl Libraw<'_> {
             },
             color: ColorData {
                 maximum: unsafe { &(*lr_data).color.maximum },
+                cam_mul: unsafe { &(*lr_data).color.cam_mul },
             },
             image: None,
             image_rs: None,
@@ -87,11 +89,13 @@ impl Libraw<'_> {
 
     //int LibRaw::open_file(const char *filename[,INT64 bigfile_size])
 
-    pub fn unpack(&mut self) -> Result<&Self, LibRaw_errors> {
+    pub fn unpack(&mut self) -> Result<&Self, String> {
         let unpkg_res = unsafe { libraw_unpack(self.data) };
 
         if unpkg_res != LibRaw_errors_LIBRAW_SUCCESS {
-            return Err(unpkg_res);
+            return Err(unsafe { std::ffi::CStr::from_ptr(strerror(unpkg_res)) }
+                .to_string_lossy()
+                .to_string());
         }
 
         self.sizes.raw_width = unsafe { &(*self.data).rawdata.sizes.raw_width };
@@ -177,6 +181,9 @@ impl Libraw<'_> {
     pub fn save_to_file_as(&self, format: ImageFormat, _file: &Path) -> Option<()> {
         let _ = format;
         Some(())
+    }
+    pub fn color(&self, row: i32, col: i32) -> i32 {
+        unsafe { libraw_COLOR(self.data, row, col) }
     }
 }
 
