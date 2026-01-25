@@ -1,23 +1,16 @@
+use image::{Rgb, Rgb32FImage};
+
 #[cfg(test)]
 mod tests {
 
-    use std::{
-        fs::File,
-        io::{BufReader, BufWriter, Write},
-        path::Path,
-        process::exit,
-    };
+    use std::path::Path;
 
     use crate::{
         Libraw,
-        libraw_sys::{
-            LibRaw_KodakSensors_LIBRAW_Kodak_C14, libraw_COLOR, libraw_raw2image,
-            libraw_subtract_black, strerror,
-        },
+        libraw_sys::{libraw_COLOR, strerror},
     };
     use image::{
-        self as LImage, DynamicImage, GenericImageView, ImageBuffer, ImageFormat, ImageReader,
-        Luma, LumaA, Rgb, Rgb32FImage, RgbImage, buffer::ConvertBuffer, imageops,
+        ImageBuffer, ImageFormat, Luma, Rgb32FImage, RgbImage, buffer::ConvertBuffer, imageops,
     };
 
     #[test]
@@ -75,20 +68,41 @@ mod tests {
             px.0[0] *= wb[c] / max;
         }
 
-        //Конвертация плоского Raw в RGB
-        let mut img_rgb = RgbImage::new(
+        //Конвертация плоского Raw в RGB float 32
+        let mut img_frgb = Rgb32FImage::new(
             (*lr_data.sizes.width).into(),
             (*lr_data.sizes.height).into(),
         );
 
-        let mut img_f32_iter = img_f32.iter();
-        for (x, y, pixel) in img_rgb.enumerate_pixels_mut() {
-            let c = unsafe { libraw_COLOR(lr_data.data, y as i32, x as i32) } as usize;
-            pixel.0[c] = (img_f32_iter.next().unwrap() * 255.0).round() as u8
+        for (x, y, pixel) in img_frgb.enumerate_pixels_mut() {
+            let c: usize = unsafe { libraw_COLOR(lr_data.data, y as i32, x as i32) } as usize;
+            pixel.0[c] = img_f32[(x, y)].0[0];
         }
 
+        let img_rgb: RgbImage = img_frgb.convert();
         let _ = img_rgb.save_with_format(Path::new("./my.png"), ImageFormat::Png);
 
         assert!(true);
     }
+}
+
+fn green_block_3x3(buf: &mut Rgb32FImage) {
+    for (x, y, pixel) in buf.enumerate_pixels_mut() {
+        let offset = (x, y);
+        let coord = (x - offset.0, y - offset.1);
+        match coord {
+            (0, 0) => continue,
+            (0, 1) => {
+                get_min_max(pixel, x as usize, y as usize);
+            }
+
+            _ => continue,
+        }
+    }
+    todo!()
+}
+
+fn get_min_max(pixel: &mut Rgb<f32>, _x: usize, _y: usize) {
+    let _ = pixel;
+    todo!();
 }
